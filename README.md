@@ -4,7 +4,7 @@ Fail-closed neuroimaging **workbench**: validate → `--approve` → boundary �
 
 Install name and command: **`neuroworkbench`**. This is not [NeuroInsight](https://github.com/phindagijimana/neuroinsight_research) (the shipping desktop) and not an agent. There is no `neuroinsight` or `neuroinsight-agent` command.
 
-The agent cannot execute. A proposer is a separate package (`neuroworkbench-proposer`).
+The agent cannot execute. A proposer is a separate package (`nwproposer`).
 
 ## Install
 
