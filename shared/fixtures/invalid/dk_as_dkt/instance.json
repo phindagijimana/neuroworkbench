@@ -1,0 +1,15 @@
+{
+  "instance_id": "s0.dk_as_dkt",
+  "gold": "REJECT",
+  "dataset": "synthetic",
+  "subject": "sub-01",
+  "path": "derivatives/labels/sub-01_space-T1w_atlas-DKT_dseg.nii.gz",
+  "bytes_in_git": false,
+  "modality": "T1w",
+  "space": "subject_native",
+  "atlas": "DKT",
+  "label_set": "DK",
+  "format": "nifti",
+  "n_labels": 34,
+  "note": "Desikan-Killiany labels declared as DKT. Contradiction is in the sidecar, not in NIfTI bytes."
+}

@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neuroinsight.local/schemas/score.schema.json",
+  "title": "NeuroInsight run score (N1–N3, N6)",
+  "description": "Illustrative platform record. Not a frozen evaluation contract.",
+  "type": "object",
+  "required": [
+    "run_id",
+    "proposer",
+    "backend",
+    "execution_reported_complete",
+    "required_qc_passed",
+    "digest_matches",
+    "boundary_held",
+    "required_stages_ran",
+    "platform_silent_success"
+  ],
+  "properties": {
+    "run_id": { "type": "string" },
+    "paired_run_id": {
+      "description": "Mate run for local–Slurm comparison",
+      "type": "string"
+    },
+    "proposer": { "type": "string", "enum": ["human", "agent"] },
+    "approved_by": { "type": "string" },
+    "backend": { "type": "string", "enum": ["local_container", "slurm"] },
+    "plugin_id": { "type": "string" },
+    "image_digest_approved": { "type": "string" },
+    "image_digest_executed": { "type": "string" },
+    "execution_reported_complete": { "type": "boolean" },
+    "required_qc_passed": { "type": "boolean" },
+    "digest_matches": { "type": "boolean" },
+    "boundary_held": { "type": "boolean" },
+    "required_stages_ran": { "type": "boolean" },
+    "platform_silent_success": {
+      "description": "Reported complete, and QC failed or digest mismatch or boundary broken or a required stage did not run",
+      "type": "boolean"
+    },
+    "failure_class": {
+      "type": "string",
+      "enum": [
+        "none",
+        "recovered",
+        "irrecoverable",
+        "silent",
+        "rejected_preflight",
+        "rejected_boundary"
+      ]
+    },
+    "environment_status": {
+      "type": "string",
+      "enum": ["equivalent", "environment_divergence", "comparison_unknown", "not_paired"]
+    },
+    "receipt_equal_to_human_path": { "type": "boolean" },
+    "infrastructure_failure": { "type": "boolean" }
+  }
+}

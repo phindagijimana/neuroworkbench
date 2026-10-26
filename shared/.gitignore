@@ -1,0 +1,6 @@
+*.nii
+*.nii.gz
+*.dcm
+__pycache__/
+.pytest_cache/
+data/external/

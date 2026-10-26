@@ -1,0 +1,12 @@
+# Dry-run digest allowlist for Paper 5 v0.
+# Shared S0 pins live in ../shared/pins.yaml when that file exists.
+# Mismatch against this digest is not complete. No FastSurfer GPU.
+schema_version: 0.1
+role: dry-run-allowlist
+container:
+  name: neurodesk-or-apptainer-image
+  digest: "sha256:PENDING"
+  dry_run: true
+bytes_in_git: false
+fastsurfer_gpu: false
+network_default: off

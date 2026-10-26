@@ -1,0 +1,24 @@
+# NeuroInsight N4 receipt checklist. Encode as PROV / RO-Crate / DataLad.
+# Do not invent a provenance language. QC-not-run is a first-class field.
+schema_version: 0.1
+encoding: [PROV, RO-Crate, DataLad]
+required_answers:
+  - proposer
+  - approver
+  - input_hashes
+  - bids_identities
+  - plugin_version
+  - image_digest
+  - parameters
+  - resource_request
+  - environment
+  - slurm_job_id_if_hpc
+  - qc_passed
+  - qc_failed
+  - qc_did_not_run
+  - output_hashes
+  - boundary_held
+reconstructability_test:
+  reader: independent_blinded
+  gold: [reconstruct_run, correct_failure_class]
+  if_babs_suffices_on_bids_app_subset: emit_babs_do_not_claim_novelty

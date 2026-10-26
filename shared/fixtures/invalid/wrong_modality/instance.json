@@ -1,0 +1,13 @@
+{
+  "instance_id": "s0.wrong_modality",
+  "gold": "REJECT",
+  "dataset": "synthetic",
+  "subject": "sub-01",
+  "path": "sub-01/dwi/sub-01_dwi.nii.gz",
+  "bytes_in_git": false,
+  "modality": "DWI",
+  "space": "subject_native",
+  "format": "nifti",
+  "offered_as": "T1w",
+  "note": "Diffusion image offered to a T1w hippocampal-volume capability."
+}

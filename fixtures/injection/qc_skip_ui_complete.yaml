@@ -1,0 +1,16 @@
+# Failure injection: required QC listed but not run; UI/API says complete.
+# Score must set platform_silent_success. Not a measured rate.
+proposer: human
+plugin_id: fastsurfer_anatomical
+plugin_version: 0.1.0
+image_digest: "sha256:PENDING"
+inputs:
+  t1w: "bids:sub-01/anat/sub-01_T1w.nii.gz"
+parameters: {}
+backend: local_container
+network: off
+approval:
+  execution: true
+injection:
+  kind: qc_skip
+  ui_reported_complete: true

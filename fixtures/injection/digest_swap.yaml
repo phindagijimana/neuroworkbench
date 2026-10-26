@@ -1,0 +1,14 @@
+# Failure injection: presented digest ≠ pin. Not complete. No silent-success rate.
+proposer: human
+plugin_id: fastsurfer_anatomical
+plugin_version: 0.1.0
+image_digest: "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+inputs:
+  t1w: "bids:sub-01/anat/sub-01_T1w.nii.gz"
+parameters: {}
+backend: local_container
+network: off
+approval:
+  execution: true
+injection:
+  kind: digest_swap

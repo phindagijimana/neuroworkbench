@@ -1,0 +1,24 @@
+# NeuroInsight N1 run request. Human form and agent proposal compile to this object.
+# The agent cannot call the executor.
+schema_version: 0.1
+run_request:
+  proposer:
+    enum: [human, agent]
+  plugin_id: required
+  plugin_version: required
+  image_digest: required
+  inputs: required
+  parameters: required
+  backend:
+    enum: [local_container, slurm]
+  network:
+    default: off
+  approval:
+    required: true
+    covers: [execution, overwrite, hpc_submit, any_network_path]
+kernel:
+  agent_may_write_request: true
+  agent_may_call_executor: false
+  unrestricted_shell: false
+  model_written_commands: allowlisted_plugin_invoke_only
+  receipt_format: identical_regardless_of_proposer

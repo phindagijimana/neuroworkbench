@@ -1,0 +1,13 @@
+{
+  "instance_id": "s0.complete_t1w",
+  "gold": "ALLOW",
+  "dataset": "ds000003",
+  "doi": "10.18112/openneuro.ds000003.v1.0.0",
+  "subject": "sub-01",
+  "path": "sub-01/anat/sub-01_T1w.nii.gz",
+  "bytes_in_git": false,
+  "modality": "T1w",
+  "space": "subject_native",
+  "format": "nifti",
+  "qc_status": "unknown"
+}

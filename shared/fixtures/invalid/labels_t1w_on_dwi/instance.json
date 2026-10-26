@@ -1,0 +1,20 @@
+{
+  "instance_id": "s0.labels_t1w_on_dwi",
+  "intended_failure": "T1w parcellation wired to DWI without a transform",
+  "expected_check": "SciGuard FAIL (RULE-SPACE-002); NeuroAgentBench abstain/reject",
+  "bytes_in_git": false,
+  "source": {
+    "kind": "parcellation",
+    "modality": "T1w",
+    "space": "subject_native",
+    "atlas": "DKT",
+    "path": "derivatives/labels/sub-01_space-T1w_atlas-DKT_dseg.nii.gz"
+  },
+  "target": {
+    "kind": "diffusion",
+    "modality": "DWI",
+    "space": "dwi",
+    "path": "sub-01/dwi/sub-01_dwi.nii.gz"
+  },
+  "transform": null
+}

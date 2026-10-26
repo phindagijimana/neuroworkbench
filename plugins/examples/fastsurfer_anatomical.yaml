@@ -1,0 +1,37 @@
+# Illustrative NeuroInsight plugin contract from Paper 5. Not a confirmed FastSurfer manifest.
+name: fastsurfer_anatomical
+version: 0.1.0
+scientific_purpose: cortical_and_subcortical_segmentation
+intended_use: research_only
+inputs:
+  t1w:
+    format: NIfTI
+    bids_suffix: T1w
+outputs:
+  segmentation: nifti
+  statistics: tabular
+  qc: report
+executor:
+  kind: container
+  image_digest: REQUIRED
+resources:
+  cpu: 8
+  memory_gb: 32
+  gpu: optional
+checks:
+  required:
+    - input_schema
+    - stage_completion
+    - output_exists
+    - qc_required
+  not_run_is_not_pass: true
+provenance:
+  - input_hash
+  - software_version
+  - parameters
+  - environment
+  - image_digest
+  - qc_did_not_run
+approval_required: true
+network: off
+agent_may_invoke_directly: false

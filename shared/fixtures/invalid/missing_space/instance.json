@@ -1,0 +1,10 @@
+{
+  "instance_id": "s0.missing_space",
+  "gold": "ABSTAIN",
+  "dataset": "ds000003",
+  "subject": "sub-01",
+  "path": "sub-01/anat/sub-01_T1w.nii.gz",
+  "bytes_in_git": false,
+  "modality": "T1w",
+  "format": "nifti"
+}

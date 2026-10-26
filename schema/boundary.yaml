@@ -1,0 +1,18 @@
+# NeuroInsight N6 data-boundary policy. CyberNeuro owns the Windows measurement.
+# This rule is for Linux local and Slurm.
+schema_version: 0.1
+intended_use: research_only
+clinical_or_diagnostic_claim: never
+external_model_api_with_restricted_mri: REJECT
+undeclared_outbound_during_run:
+  run_status: fail
+  boundary_held: false
+  silent_if_ui_says_complete: true
+metadata_only_agent_help:
+  allowed: policy_opt_in
+  image_bytes_may_leave_box: false
+tests_required:
+  - linux_local_disconnected_host
+  - slurm_disconnected_or_egress_blocked
+  - attempted_exfil_fixture
+default_network: off

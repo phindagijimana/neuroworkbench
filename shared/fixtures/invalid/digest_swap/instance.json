@@ -1,0 +1,8 @@
+{
+  "instance_id": "s0.digest_swap",
+  "intended_failure": "presented container digest does not equal the approved pin",
+  "expected_check": "NeuroInsight N2 (platform_silent_success / digest mismatch)",
+  "bytes_in_git": false,
+  "approved_digest": "sha256:72a16811e1243a4838f5d8a9a98dc992affa6864e920ac99c31033a42b22fb8d",
+  "presented_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+}

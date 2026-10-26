@@ -1,0 +1,22 @@
+accession: ds000003
+title: Rhyme judgment
+doi: 10.18112/openneuro.ds000003.v1.0.0
+url: https://openneuro.org/datasets/ds000003
+github: https://github.com/OpenNeuroDatasets/ds000003
+retrieved: "2026-10-26"
+bytes_in_git: false
+license: PDDL-1.0
+subjects:
+  - sub-01
+files:
+  - path: sub-01/anat/sub-01_T1w.nii.gz
+    role: t1w
+    bytes_in_git: false
+fetch: |
+  # Clean-machine fetch. Do not commit NIfTI.
+  # datalad install https://github.com/OpenNeuroDatasets/ds000003.git
+  # datalad get sub-01/anat/sub-01_T1w.nii.gz
+validator:
+  command: "npx bids-validator@3.0.2 /path/to/ds000003"
+  skip_if_bytes_absent: true
+  note: "Documented only. Bytes are not local in this repository, so the validator is not run in CI."

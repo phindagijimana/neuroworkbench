@@ -1,0 +1,14 @@
+# Failure injection: OOM during dry-run execute. Irrecoverable, never silent.
+proposer: human
+plugin_id: fastsurfer_anatomical
+plugin_version: 0.1.0
+image_digest: "sha256:PENDING"
+inputs:
+  t1w: "bids:sub-01/anat/sub-01_T1w.nii.gz"
+parameters: {}
+backend: local_container
+network: off
+approval:
+  execution: true
+injection:
+  kind: oom
