@@ -1,38 +1,23 @@
 # NeuroWorkbench
 
-Fail-closed neuroimaging **workbench**: validate → `--approve` → boundary → receipt → silent-success flag.
+Fail-closed workbench: validate → `--approve` → boundary → receipt.
 
-Install name and command: **`neuroworkbench`**. This is not [NeuroInsight](https://github.com/phindagijimana/neuroinsight_research) (the shipping desktop) and not an agent. There is no `neuroinsight` or `neuroinsight-agent` command.
+Command: **`neuroworkbench`**. Not the [NeuroInsight desktop](https://github.com/phindagijimana/neuroinsight_research). Not an agent. No `neuroinsight-agent`.
 
-The agent cannot execute. A proposer is a separate package (`nwproposer`).
-
-## Install
+## Go
 
 ```bash
-pip install -e .
-```
-
-Python 3.11+. Dry-run only (no FastSurfer GPU). No model API.
-
-## Use
-
-```bash
-neuroworkbench pin-check examples/requests/t1w_human.yaml
-neuroworkbench submit examples/requests/t1w_human.yaml            # no execute
+git clone https://github.com/phindagijimana/neuroworkbench.git
+cd neuroworkbench && pip install -e .
 neuroworkbench submit examples/requests/t1w_human.yaml --approve
-neuroworkbench receipt --run RUN_ID --format ro-crate
 ```
 
-## Tests
+Python 3.11+. Dry-run only. No model API. Without `--approve`, execute is not called.
 
 ```bash
 pytest tests
 ```
 
-## Docs
+Proposer (no execute): [`nwproposer`](https://github.com/phindagijimana/nwproposer).
 
-- [Methods](docs/NeuroInsight_Methods.md) (N1–N6)
-- [Literature map](docs/NeuroInsight_Literature_Map.md)
-- [Methods trace](docs/METHODS_TRACE.md)
-
-Apache-2.0. No NIfTI or PHI in this repo.
+[Methods](docs/NeuroInsight_Methods.md) · Apache-2.0 · no NIfTI or PHI
