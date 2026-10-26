@@ -7,6 +7,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from kernel.external import external_s0_status
+from kernel.hardware import probe_hardware
 from kernel.request import RunRequest
 from provenance.rocrate import receipt_to_rocrate
 
@@ -47,6 +49,8 @@ def build_receipt(
     reason: str,
     dry_run: bool,
     executed_digest: str | None = None,
+    hardware: dict[str, Any] | None = None,
+    external_s0: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     receipt = {
         "run_id": run_id,
@@ -62,7 +66,7 @@ def build_receipt(
             "cpu": 8,
             "memory_gb": 32,
             "gpu": False,
-            "note": "plugin sketch; GPU not allocated in dry-run",
+            "note": "plugin sketch; GPU not allocated; Slurm not submitted in dry-run",
         },
         "environment": request.backend,
         "backend": request.backend,
@@ -76,6 +80,8 @@ def build_receipt(
         "reason": reason,
         "dry_run": dry_run,
         "encoding": ["PROV", "RO-Crate", "DataLad"],
+        "hardware": hardware or probe_hardware(),
+        "external_s0": external_s0 if external_s0 is not None else external_s0_status(),
     }
     missing = [key for key in RECEIPT_KEYS if key not in receipt]
     if missing:

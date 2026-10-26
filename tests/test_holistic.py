@@ -74,15 +74,12 @@ def _try_sciguard_labels() -> dict[str, Any]:
 
 
 def _try_scicap() -> dict[str, Any]:
-    try:
-        import scicap  # type: ignore
+    from kernel.preflight import _load_scicap_invoke
 
-        invoke = getattr(scicap, "invoke", None)
-        if invoke is None:
-            return {"library": "not_run", "decision": "not_run", "reason": "scicap_invoke_missing"}
-        return {"library": "scicap", "decision": "imported"}
-    except ImportError:
+    invoke, origin = _load_scicap_invoke()
+    if invoke is None:
         return {"library": "not_run", "decision": "not_run", "reason": "scicap_not_importable"}
+    return {"library": origin or "scicap", "decision": "imported"}
 
 
 def test_human_t1w_matching_digest_pin_ok_and_accepted_not_silent(tmp_path: Path) -> None:

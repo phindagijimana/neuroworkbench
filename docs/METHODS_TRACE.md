@@ -55,7 +55,24 @@ Call `scicap invoke` and `sciguard validate` as libraries when importable. If th
 | Live SciCap / SciGuard on labels→DWI, else `not_run` | `kernel/preflight.py` (sibling import; never fake PASS) | `tests/test_preflight_live.py` |
 | N6 disconnected host | `NI_OFFLINE=1` still REJECT on `network: on` + external API | `tests/test_boundary.py` |
 
-No FastSurfer GPU. No Slurm. No `neuroinsight-agent` script. No clone of `neuroinsight_research`. No measured silent-success rate.
+No FastSurfer GPU. No Slurm job submit. No `neuroinsight-agent` script. No clone of `neuroinsight_research`. No measured silent-success rate.
+
+## Wave 5 (toward production)
+
+| Slice | Location | Test |
+|---|---|---|
+| Point dry-run at `shared/data/external/ds000003` when those bytes already exist; never download; no NIfTI in git | `kernel/external.py`; `examples/requests/t1w_ds000003.yaml`; `neuroworkbench submit --external-s0` | `tests/test_external_s0.py` |
+| GPU / Slurm only if `nvidia-smi` / `sbatch` are on PATH; still dry-run unless a real pin matches a local image | `kernel/hardware.py`; `kernel/execute.py` | `tests/test_hardware.py` |
+| Live SciCap / SciGuard; `_load_scicap_core_module` defined once (no NameError) | `kernel/preflight.py` | `tests/test_preflight_live.py` |
+
+## Wave 6 (product slice without GPU)
+
+S0 T1w may now be on disk under `shared/data/external/ds000003`. Resolve `external:ds000003` to that path only when the bytes are real gzip (`\x1f\x8b`). A git-annex pointer (tiny ASCII, starts with `..`) is **absent**. `neuroworkbench submit examples/requests/t1w_ds000003.yaml --approve` stays dry-run: no container execute unless a pinned local image is present (it is not). Record `qc_did_not_run`. Never fake SciCap/SciGuard PASS. Do not pull Neurodesk. Do not run FastSurfer. Do not submit Slurm.
+
+| Slice | Location | Test |
+|---|---|---|
+| git-annex pointer ≠ T1w; real gzip resolves | `kernel/external.py` | `tests/test_external_s0.py` |
+| CLI dry-run submit of `t1w_ds000003.yaml` is fail-closed | `neuroworkbench/cli.py`; `kernel/submit.py` | `tests/test_external_s0.py` |
 
 ## Holistic (same requests)
 

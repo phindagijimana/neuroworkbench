@@ -30,6 +30,11 @@ def main(argv: list[str] | None = None) -> int:
         help="human execution approval; without this flag execute is not called",
     )
     p_submit.add_argument("--store", default=str(DEFAULT_STORE))
+    p_submit.add_argument(
+        "--external-s0",
+        action="store_true",
+        help="point t1w at shared/data/external/ds000003 if present (no download)",
+    )
 
     p_pin = sub.add_parser(
         "pin-check",
@@ -46,7 +51,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "validate":
         return _validate_plugin(Path(args.plugin))
     if args.command == "submit":
-        return _submit(Path(args.request), approve=args.approve, store=Path(args.store))
+        return _submit(
+            Path(args.request),
+            approve=args.approve,
+            store=Path(args.store),
+            use_external_s0=args.external_s0,
+        )
     if args.command == "pin-check":
         return _pin_check(Path(args.request))
     if args.command == "receipt":
@@ -93,12 +103,18 @@ def _pin_check(path: Path) -> int:
     return 0 if result["status"] == "pin_ok" else 1
 
 
-def _submit(path: Path, *, approve: bool, store: Path) -> int:
+def _submit(path: Path, *, approve: bool, store: Path, use_external_s0: bool = False) -> int:
     # Kernel path has no model. Unset keys do not block; they must stay unused.
     _ = os.environ.get("OPENAI_API_KEY")
     from kernel.submit import submit
 
-    result = submit(path, approve=approve, store=store, dry_run=True)
+    result = submit(
+        path,
+        approve=approve,
+        store=store,
+        dry_run=True,
+        use_external_s0=use_external_s0,
+    )
     print(json.dumps(_public(result), indent=2))
     if result["status"] == "accepted":
         return 0
@@ -133,6 +149,10 @@ def _public(result: dict[str, Any]) -> dict[str, Any]:
         "receipt": result["receipt"],
         "score": result["score"],
         "receipt_path": result["receipt_path"],
+        "hardware": result.get("hardware"),
+        "external_s0": result.get("external_s0"),
+        "qc": result.get("qc"),
+        "preflight": result.get("preflight"),
     }
 
 

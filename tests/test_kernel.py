@@ -53,9 +53,16 @@ def test_human_approved_dry_run_receipt(tmp_path: Path) -> None:
     assert receipt["input_hashes"]["t1w"] == "bytes_unavailable"
     assert receipt["dry_run"] is True
     assert result["score"]["execution_reported_complete"] is False
-    assert result["preflight"]["scicap"]["library"] == "not_run"
-    assert result["preflight"]["sciguard"]["library"] == "not_run"
-    assert "PASS" not in (result["preflight"]["scicap"].get("decision"),)
+    scicap = result["preflight"]["scicap"]
+    sciguard = result["preflight"]["sciguard"]
+    assert scicap.get("library") in {"scicap", "scicap_core", "not_run"}
+    assert sciguard.get("library") in {"sciguard", "not_run"}
+    assert scicap.get("decision") != "PASS"
+    assert sciguard.get("status") != "PASS"
+    if scicap.get("library") in {"scicap", "scicap_core"}:
+        # T1w request does not declare space; live SciCap must ABSTAIN, not invent ALLOW.
+        assert scicap.get("decision") == "ABSTAIN"
+        assert not scicap.get("bound_space")
 
 
 def test_labels_to_dwi_refused_no_execute(tmp_path: Path) -> None:

@@ -3,6 +3,8 @@
 from kernel.approve import ApprovalError, require_approval
 from kernel.boundary import BoundaryDecision, evaluate_boundary
 from kernel.execute import AGENT_MAY_CALL_EXECUTOR, execute, execute_call_count, reset_execute_calls
+from kernel.external import external_s0_status, find_ds000003_t1w
+from kernel.hardware import probe_hardware
 from kernel.preflight import preflight
 from kernel.qc import collect_qc
 from kernel.receipt import build_receipt, write_receipt
@@ -22,9 +24,12 @@ __all__ = [
     "evaluate_boundary",
     "execute",
     "execute_call_count",
+    "external_s0_status",
+    "find_ds000003_t1w",
     "parse_request",
     "platform_silent_success",
     "preflight",
+    "probe_hardware",
     "receipt_to_rocrate",
     "require_approval",
     "reset_execute_calls",

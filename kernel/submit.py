@@ -9,6 +9,8 @@ from typing import Any
 from kernel.approve import require_approval
 from kernel.boundary import evaluate_boundary
 from kernel.execute import ExecutionResult, execute
+from kernel.external import resolve_external_inputs
+from kernel.hardware import probe_hardware
 from kernel.preflight import preflight
 from kernel.qc import collect_qc
 from kernel.receipt import build_receipt, write_receipt
@@ -22,8 +24,10 @@ def submit(
     approve: bool,
     store: Path | None = None,
     dry_run: bool = True,
+    use_external_s0: bool = False,
 ) -> dict[str, Any]:
     request = source if isinstance(source, RunRequest) else parse_request(source)
+    request = resolve_external_inputs(request, use_external_s0=use_external_s0)
     run_id = f"ni-{uuid.uuid4().hex[:12]}"
     validation = validate_request(request)
     if not validation["ok"]:
@@ -166,6 +170,8 @@ def _finish(
         reason=reason,
         dry_run=dry_run,
         executed_digest=None if execution is None else execution.image_digest,
+        hardware=None if execution is None else execution.hardware or probe_hardware(),
+        external_s0=request.raw.get("external_s0"),
     )
     receipt_path = None
     if store is not None:
@@ -198,4 +204,6 @@ def _finish(
         "qc": qc,
         "preflight": preflight_record,
         "validation_digest_matches": digest_matches,
+        "hardware": receipt.get("hardware"),
+        "external_s0": receipt.get("external_s0"),
     }

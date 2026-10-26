@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from kernel.approve import ApprovalError
+from kernel.hardware import dry_run_policy, probe_hardware
 from kernel.request import RunRequest
 
 # Locked N1 policy. An agents/ helper that imports this module fails test_n1.
@@ -38,6 +39,7 @@ class ExecutionResult:
     reported_complete: bool = False
     reason: str = "dry_run_no_container"
     argv: list[str] = field(default_factory=list)
+    hardware: dict[str, Any] = field(default_factory=dict)
 
 
 def reset_execute_calls() -> None:
@@ -56,7 +58,9 @@ def execute(
 ) -> ExecutionResult:
     """Invoke only after validate, --approve, and boundary ALLOW.
 
-    v0 never launches FastSurfer or a GPU job. Arguments are a list, never a
+    Never launches FastSurfer or a GPU job unless nvidia-smi is present
+    *and* a real (non-PENDING) pin matches a local image. Slurm on PATH
+    does not submit ``sbatch``. Arguments are a list, never a
     shell-interpolated string.
     """
     if not approved:
@@ -64,6 +68,7 @@ def execute(
     if AGENT_MAY_CALL_EXECUTOR:
         raise RuntimeError("N1 violation: agent_may_call_executor must stay false")
     _EXECUTE_CALLS.append(request.plugin_id)
+    hardware = probe_hardware()
     kind = injection_kind(request)
     if kind in OOM_KINDS:
         return ExecutionResult(
@@ -75,6 +80,7 @@ def execute(
             reported_complete=False,
             reason="oom",
             argv=_plugin_argv(request),
+            hardware=hardware,
         )
     if kind in INTERRUPTED_KINDS:
         return ExecutionResult(
@@ -86,36 +92,20 @@ def execute(
             reported_complete=False,
             reason="interrupted_worker",
             argv=_plugin_argv(request),
+            hardware=hardware,
         )
-    if request.backend != "local_container":
-        return ExecutionResult(
-            dry_run=True,
-            executed=False,
-            backend=request.backend,
-            image_digest=request.image_digest,
-            reported_complete=False,
-            reason="slurm_not_in_v0",
-            argv=_plugin_argv(request),
-        )
-    if not dry_run:
-        return ExecutionResult(
-            dry_run=False,
-            executed=False,
-            backend=request.backend,
-            image_digest=request.image_digest,
-            reported_complete=False,
-            reason="container_unavailable_no_fastsurfer_gpu",
-            argv=_plugin_argv(request),
-        )
+    policy = dry_run_policy(request, hardware=hardware)
+    stay_dry = bool(dry_run or policy["dry_run"])
     return ExecutionResult(
-        dry_run=True,
+        dry_run=stay_dry,
         executed=False,
         backend=request.backend,
         image_digest=request.image_digest,
         stages_ran=[],
         reported_complete=False,
-        reason="dry_run_no_fastsurfer_gpu",
+        reason=policy["reason"],
         argv=_plugin_argv(request),
+        hardware=policy["hardware"],
     )
 
 
@@ -138,4 +128,5 @@ def execution_result_from_dict(data: dict[str, Any]) -> ExecutionResult:
         reported_complete=bool(data.get("reported_complete", False)),
         reason=str(data.get("reason", "")),
         argv=list(data.get("argv") or []),
+        hardware=dict(data.get("hardware") or {}),
     )

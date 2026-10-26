@@ -1,0 +1,17 @@
+# Dry-run request pointed at public OpenNeuro ds000003 when those bytes
+# already exist under shared/data/external/. Token is resolved at submit.
+# Do not commit NIfTI. Pytest does not download.
+proposer: human
+plugin_id: fastsurfer_anatomical
+plugin_version: 0.1.0
+image_digest: "sha256:PENDING"
+inputs:
+  t1w: "external:ds000003"
+parameters: {}
+backend: local_container
+network: off
+approval:
+  execution: true
+notes:
+  accession: ds000003
+  bytes_in_git: false

@@ -50,10 +50,19 @@ def collect_qc(
             if name not in did_not_run:
                 did_not_run.append(name)
             notes.append(f"{name}: not_run")
-        elif record.get("decision") == "ALLOW" or record.get("status") == "PASS":
+        elif record.get("decision") == "ALLOW":
             passed.append(name)
         elif record.get("decision") == "REJECT" or record.get("status") == "FAIL":
             failed.append(name)
+        elif record.get("decision") == "ABSTAIN" or record.get("status") in {
+            "UNKNOWN",
+            "NEEDS_REVIEW",
+        }:
+            notes.append(f"{name}: {record.get('decision') or record.get('status')} (not PASS)")
+        elif record.get("status") == "PASS":
+            notes.append(f"{name}: refused fake PASS")
+            if name not in did_not_run:
+                did_not_run.append(name)
     required_ran_and_passed = (not did_not_run) and (not failed)
     return {
         "qc_passed": passed,

@@ -7,15 +7,22 @@ import sys
 from pathlib import Path
 from typing import Any, Callable
 
+import yaml
+
 from kernel.request import RunRequest
 
 FOLDER_ROOT = Path(__file__).resolve().parents[1]
 WORKSPACE = FOLDER_ROOT.parent
-SCICAP_CORE = WORKSPACE / "01_SciCap" / "packages" / "scicap-core"
+SCICAP_ROOT = WORKSPACE / "01_SciCap"
+SCICAP_CORE = SCICAP_ROOT / "packages" / "scicap-core"
+SCICAP_NEURO = SCICAP_ROOT / "packages" / "scicap-neuro" / "capabilities"
 SCIGUARD_ROOT = WORKSPACE / "02_SciGuard"
 SCIGUARD_LABELS_FIXTURE = (
     SCIGUARD_ROOT / "fixtures" / "invalid" / "labels_t1w_to_dwi_no_transform.yaml"
 )
+PLUGIN_TO_CAPABILITY = {
+    "fastsurfer_anatomical": "neuro.t1.anatomical_segmentation",
+}
 
 LABELS_TO_DWI_PLUGINS = frozenset(
     {
@@ -68,7 +75,7 @@ def _append_sys_path(path: Path) -> None:
 
 
 def _scicap_invoke(request: RunRequest) -> dict[str, Any]:
-    """Import SciCap if possible. Do not call invoke without capability+instance."""
+    """Live SciCap invoke when the sibling imports. Never invent PASS or space."""
     invoke_fn, origin = _load_scicap_invoke()
     if invoke_fn is None:
         return {
@@ -78,10 +85,9 @@ def _scicap_invoke(request: RunRequest) -> dict[str, Any]:
         }
     capability, instance = _scicap_bind_args(request)
     if capability is None or instance is None:
-        # Importable but this run request is not a SciCap instance. Not PASS.
         return {
             "decision": "not_run",
-            "library": "not_run",
+            "library": origin or "not_run",
             "reason": "scicap_no_capability_instance",
             "importable": origin,
         }
@@ -90,25 +96,32 @@ def _scicap_invoke(request: RunRequest) -> dict[str, Any]:
     except TypeError:
         return {
             "decision": "not_run",
-            "library": "not_run",
+            "library": origin or "not_run",
             "reason": "scicap_invoke_signature_mismatch",
             "importable": origin,
         }
     except Exception as exc:  # noqa: BLE001 — live sibling may raise; never fake PASS
         return {
             "decision": "not_run",
-            "library": "not_run",
+            "library": origin or "not_run",
             "reason": f"scicap_error:{exc}",
             "importable": origin,
         }
     decision = str(result.get("decision", "not_run"))
     if decision == "PASS":
+        # SciCap is ALLOW/REJECT/ABSTAIN. A PASS token is not a real invoke result.
         decision = "not_run"
-    return {"decision": decision, "library": "scicap", "raw": result, "importable": origin}
+    return {
+        "decision": decision,
+        "library": origin or "scicap",
+        "raw": result,
+        "importable": origin,
+        "bound_space": (result.get("bound") or {}).get("space"),
+    }
 
 
 def _sciguard_validate(request: RunRequest) -> dict[str, Any]:
-    """Live SciGuard on labels→DWI. Record FAIL or not_run. Never fake PASS."""
+    """Live SciGuard when importable. Record FAIL or not_run. Never fake PASS."""
     check_fn = _load_sciguard_check()
     if check_fn is None:
         return {
@@ -119,7 +132,7 @@ def _sciguard_validate(request: RunRequest) -> dict[str, Any]:
     if not _labels_to_dwi_no_transform(request):
         return {
             "status": "not_run",
-            "library": "not_run",
+            "library": "sciguard",
             "reason": "sciguard_no_workflow_for_request",
         }
     workflow: Path | dict[str, Any]
@@ -132,7 +145,7 @@ def _sciguard_validate(request: RunRequest) -> dict[str, Any]:
     except Exception as exc:  # noqa: BLE001 — live sibling may raise; never fake PASS
         return {
             "status": "not_run",
-            "library": "not_run",
+            "library": "sciguard",
             "reason": f"sciguard_error:{exc}",
         }
     failed = any(item.get("status") == "FAIL" for item in (result.get("edges") or []))
@@ -150,7 +163,40 @@ def _sciguard_validate(request: RunRequest) -> dict[str, Any]:
     }
 
 
+def _ensure_sibling_paths() -> None:
+    if SCICAP_ROOT.is_dir():
+        _append_sys_path(SCICAP_ROOT)
+    if SCIGUARD_ROOT.is_dir():
+        _append_sys_path(SCIGUARD_ROOT)
+
+
+def _load_scicap_core_module() -> bool:
+    """Load hyphenated sibling package as scicap_core. Fail closed, no fake PASS."""
+    init = SCICAP_CORE / "__init__.py"
+    if not init.is_file():
+        return "scicap_core" in sys.modules
+    if "scicap_core" in sys.modules:
+        return True
+    spec = importlib.util.spec_from_file_location(
+        "scicap_core",
+        init,
+        submodule_search_locations=[str(SCICAP_CORE)],
+    )
+    if spec is None or spec.loader is None:
+        return False
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["scicap_core"] = module
+    try:
+        spec.loader.exec_module(module)
+    except Exception:
+        sys.modules.pop("scicap_core", None)
+        return False
+    return True
+
+
 def _load_scicap_invoke() -> tuple[Callable[..., Any] | None, str | None]:
+    _ensure_sibling_paths()
+    _load_scicap_core_module()
     try:
         import scicap as pkg  # type: ignore
 
@@ -165,24 +211,8 @@ def _load_scicap_invoke() -> tuple[Callable[..., Any] | None, str | None]:
         return core_invoke, "scicap_core"
     except ImportError:
         pass
-    init = SCICAP_CORE / "__init__.py"
-    if not init.is_file():
+    if not _load_scicap_core_module():
         return None, None
-    if "scicap_core" not in sys.modules:
-        spec = importlib.util.spec_from_file_location(
-            "scicap_core",
-            init,
-            submodule_search_locations=[str(SCICAP_CORE)],
-        )
-        if spec is None or spec.loader is None:
-            return None, None
-        module = importlib.util.module_from_spec(spec)
-        sys.modules["scicap_core"] = module
-        try:
-            spec.loader.exec_module(module)
-        except Exception:
-            sys.modules.pop("scicap_core", None)
-            return None, None
     try:
         from scicap_core.invoke import invoke as sibling_invoke  # type: ignore
 
@@ -192,6 +222,7 @@ def _load_scicap_invoke() -> tuple[Callable[..., Any] | None, str | None]:
 
 
 def _load_sciguard_check() -> Callable[..., Any] | None:
+    _ensure_sibling_paths()
     try:
         import sciguard as pkg  # type: ignore
 
@@ -218,9 +249,55 @@ def _load_sciguard_check() -> Callable[..., Any] | None:
 
 
 def _scicap_bind_args(request: RunRequest) -> tuple[Any, Any]:
-    """NeuroInsight run requests are not SciCap capability/instance pairs."""
-    _ = request
-    return None, None
+    """Map a run request to a sibling capability. Do not copy capability space."""
+    cap_id = request.raw.get("scicap_capability") or PLUGIN_TO_CAPABILITY.get(
+        request.plugin_id
+    )
+    if not cap_id:
+        return None, None
+    cap_path = SCICAP_NEURO / f"{cap_id}.yaml"
+    if not cap_path.is_file():
+        return None, None
+    capability = yaml.safe_load(cap_path.read_text())
+    if not isinstance(capability, dict):
+        return None, None
+    return capability, _instance_from_request(request)
+
+
+def _instance_from_request(request: RunRequest) -> dict[str, Any]:
+    """Declared fields only. Missing space stays missing (SciCap ABSTAIN, not PASS)."""
+    raw = request.raw or {}
+    params = request.parameters or {}
+    path = None
+    modality = raw.get("modality") or params.get("modality")
+    space = raw.get("space") or params.get("space")
+    if space is None and isinstance(request.inputs.get("space"), str):
+        space = request.inputs.get("space")
+    for key, value in request.inputs.items():
+        if key == "space":
+            continue
+        text = str(value)
+        if path is None:
+            path = text.replace("bids:", "").replace("bids://", "")
+        key_l = str(key).lower()
+        if modality is None and key_l in {"t1w", "t1"}:
+            modality = "T1w"
+        if modality is None and key_l in {"dwi", "dti"}:
+            modality = "DWI"
+    instance: dict[str, Any] = {
+        "instance_id": f"ni-{request.plugin_id}",
+        "path": path,
+        "qc_status": raw.get("qc_status") or "unknown",
+        "bytes_in_git": False,
+    }
+    if modality:
+        instance["modality"] = modality
+    if space:
+        instance["space"] = space
+    atlas = raw.get("atlas") or params.get("atlas")
+    if atlas:
+        instance["atlas"] = atlas
+    return instance
 
 
 def _synthesize_labels_workflow(request: RunRequest) -> dict[str, Any]:

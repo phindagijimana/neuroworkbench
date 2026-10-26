@@ -1,10 +1,16 @@
-"""Live SciCap/SciGuard on labels→DWI, or not_run. Never fake PASS."""
+"""Live SciCap/SciGuard when siblings import; not_run if missing. Never fake PASS."""
 
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 
 from kernel.execute import execute_call_count
+from kernel.preflight import (
+    _load_scicap_core_module,
+    _load_scicap_invoke,
+    _load_sciguard_check,
+)
 from kernel.request import parse_request
 from kernel.submit import submit
 
@@ -36,7 +42,8 @@ def test_labels_to_dwi_live_sciguard_fail_or_not_run(tmp_path: Path) -> None:
     assert sciguard.get("status") != "PASS"
     assert scicap.get("decision") != "PASS"
     assert scicap.get("decision") != "ALLOW"
-    if sciguard.get("library") == "sciguard":
+    if _load_sciguard_check() is not None:
+        assert sciguard.get("library") == "sciguard"
         assert sciguard["status"] == "FAIL"
     if sciguard.get("library") == "not_run":
         assert sciguard["status"] in {"FAIL", "not_run"}
@@ -50,3 +57,35 @@ def test_human_t1w_does_not_invent_library_pass(tmp_path: Path) -> None:
     sciguard = result["preflight"]["sciguard"]
     assert scicap.get("decision") != "PASS"
     assert sciguard.get("status") != "PASS"
+    invoke_fn, origin = _load_scicap_invoke()
+    if invoke_fn is not None:
+        assert scicap.get("library") in {"scicap", "scicap_core"}
+        assert origin in {"scicap", "scicap_core"}
+        assert scicap.get("decision") == "ABSTAIN"
+        assert not scicap.get("bound_space")
+    else:
+        assert scicap.get("library") == "not_run"
+        assert scicap.get("decision") == "not_run"
+    if _load_sciguard_check() is not None:
+        assert sciguard.get("library") == "sciguard"
+        assert sciguard.get("status") == "not_run"
+        assert sciguard.get("reason") == "sciguard_no_workflow_for_request"
+    else:
+        assert sciguard.get("library") == "not_run"
+        assert sciguard.get("status") == "not_run"
+    assert result["receipt"]["qc_did_not_run"]
+    assert "input_schema" in result["receipt"]["qc_did_not_run"]
+    assert result["receipt"]["dry_run"] is True
+
+
+def test_load_scicap_core_module_defined_once_no_nameerror() -> None:
+    src = (ROOT / "kernel" / "preflight.py").read_text()
+    tree = ast.parse(src)
+    defs = [
+        node.name
+        for node in ast.walk(tree)
+        if isinstance(node, ast.FunctionDef) and node.name == "_load_scicap_core_module"
+    ]
+    assert defs == ["_load_scicap_core_module"]
+    assert callable(_load_scicap_core_module)
+    assert _load_scicap_core_module() in {True, False}
